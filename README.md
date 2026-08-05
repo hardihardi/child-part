@@ -4,6 +4,7 @@
 [![Framework](https://img.shields.io/badge/Framework-Flask%203.0.0-green.svg)](https://flask.palletsprojects.org/)
 [![Vision](https://img.shields.io/badge/Vision-OpenCV%204.8.1-orange.svg)](https://opencv.org/)
 [![Database](https://img.shields.io/badge/Database-SQLite3-lightgrey.svg)](https://www.sqlite.org/)
+[![Docker](https://img.shields.io/badge/Docker-Supported-blue.svg?logo=docker)](https://www.docker.com/)
 
 **Ikuyo Vision System** adalah sistem *Quality Control* (QC) dan pemantauan perakitan komponen kecil (*child part assembly*) berbasis **Computer Vision** dan **Machine Learning** yang dirancang khusus untuk industri manufaktur (seperti PT Ikuyo Indonesia). 
 
@@ -84,12 +85,13 @@ flowchart TD
 
 | Komponen | Teknologi | Keterangan |
 | :--- | :--- | :--- |
-| **Bahasa Pemrograman** | Python 3.10.x | Diuji dan berjalan optimal pada Laragon Python 3.10 |
+| **Bahasa Pemrograman** | Python 3.10.x | Diuji dan berjalan optimal pada Laragon Python 3.10 & Docker |
 | **Web Framework** | Flask 3.0.0 | Router web server & REST API |
 | **Authentication** | Flask-Login 0.6.3 | Manajemen sesi pengguna & proteksi route |
 | **Computer Vision** | OpenCV (`opencv-python` 4.8.1) | Pengolahan citra, filter HSV, CLAHE, contour analysis |
 | **Visi AI Model** | YOLOv5 (`yolov5s.onnx`) | Integrasi model ONNX via OpenCV DNN |
 | **Database** | SQLite3 (`database.db`) | Penyimpanan log inspeksi, user, profil setting & aktivitas |
+| **Containerization** | Docker & Docker Compose | Kontainerisasi untuk kemudahan deployment & isolasi environment |
 | **Frontend UI** | HTML5, Jinja2, TailwindCSS, Chart.js, FontAwesome | Desain dashboard responsif & modern |
 
 ---
@@ -97,13 +99,15 @@ flowchart TD
 ## 📂 Struktur Folder & Berkas Proyek
 
 ```text
-c:/laragon/www/deteksi/
+c:/laragon/www/deteksi/ (atau /app dalam Docker)
 │
 ├── app.py                   # Server utama Flask (Route Web, Controller, & Autentikasi)
 ├── camera.py                # Engine Computer Vision, Deteksi Klip, & Stabilisasi Image
 ├── database.py              # Skema SQLite3, Pengaturan Default, & Fungsi Log
 ├── requirements.txt         # Daftar paket/library Python yang dibutuhkan
-├── run.bat                  # Script Windows Batch untuk menjalankan aplikasi dengan cepat
+├── Dockerfile               # Konfigurasi Container Image Docker
+├── docker-compose.yml       # Konfigurasi Orchestration Docker Compose
+├── run.bat                  # Script Windows Batch untuk Laragon / Windows
 ├── yolov5s.onnx             # Model AI YOLOv5 format ONNX
 ├── dataset.json             # Pemetaan kelas deteksi
 ├── database.db              # File SQLite database (terbuat otomatis saat app pertama berjalan)
@@ -149,35 +153,68 @@ Saat pertama kali dijalankan, `database.py` akan secara otomatis membuat *databa
 
 ## 🚀 Panduan Instalasi & Menjalankan Aplikasi
 
-### Prasyarat Sistem
-* Windows 10 / 11 (atau OS Linux/macOS).
-* Python 3.10+ (Sudah terinstall bawaan di Laragon `C:\laragon\bin\python\python-3.10\python.exe`).
-* Web Camera (USB Webcam terhubung ke PC/Laptop).
+Aplikasi dapat dijalankan melalui **Opsi 1: Laragon / Environments Lokal Windows** atau **Opsi 2: Docker / Docker Compose Container**.
 
 ---
 
-### Cara 1: Menggunakan Script `run.bat` (Paling Mudah)
+### 🟢 Opsi 1: Menggunakan Laragon (Windows / Local Environment)
 
-1. Buka folder proyek `C:\laragon\www\deteksi`.
-2. Klik ganda (*double-click*) pada berkas **`run.bat`**.
-3. Buka browser (Google Chrome / Edge) dan akses URL:
-   👉 **`http://127.0.0.1:5000`**
+#### Prasyarat:
+* Windows 10 / 11.
+* Python 3.10+ (Sudah terinstall di Laragon `C:\laragon\bin\python\python-3.10\python.exe`).
+* Web Camera / USB Webcam.
 
----
+#### Cara A: Menggunakan Script `run.bat` (Otomatis)
+1. Buka direktori proyek `C:\laragon\www\deteksi`.
+2. Klik dua kali berkas **`run.bat`**.
+3. Akses aplikasi di browser: 👉 **`http://127.0.0.1:5000`**
 
-### Cara 2: Menjalankan Manual via Terminal (Command Prompt / PowerShell)
-
-1. Buka terminal (CMD / PowerShell).
-2. Navigasikan ke direktori proyek:
+#### Cara B: Menjalankan via Terminal (Manual)
+1. Buka Command Prompt / PowerShell.
+2. Masuk ke direktori proyek:
    ```cmd
    cd C:\laragon\www\deteksi
    ```
-3. Jalankan aplikasi menggunakan Python Laragon 3.10:
+3. Jalankan aplikasi dengan Python Laragon:
    ```cmd
    C:\laragon\bin\python\python-3.10\python.exe app.py
    ```
-4. Buka browser dan akses:
-   👉 **`http://127.0.0.1:5000`**
+4. Buka browser dan akses: 👉 **`http://127.0.0.1:5000`**
+
+---
+
+### 🐳 Opsi 2: Menggunakan Docker & Docker Compose (Container Deployment)
+
+#### Prasyarat:
+* Docker Desktop (Windows/macOS) atau Docker Engine & Docker Compose (Linux).
+* USB Webcam / Web Camera terhubung.
+
+#### Cara A: Menggunakan Docker Compose (Direkomendasikan)
+1. Buka terminal pada direktori proyek.
+2. Jalankan perintah Docker Compose:
+   ```bash
+   docker-compose up --build -d
+   ```
+3. Verifikasi kontainer berjalan:
+   ```bash
+   docker-compose ps
+   ```
+4. Buka browser dan akses: 👉 **`http://localhost:5000`**
+5. Untuk menghentikan kontainer:
+   ```bash
+   docker-compose down
+   ```
+
+#### Cara B: Build & Run Docker Manual
+1. Build Docker image:
+   ```bash
+   docker build -t ikuyo-vision-system .
+   ```
+2. Jalankan container:
+   ```bash
+   docker run -d -p 5000:5000 --name ikuyo-vision ikuyo-vision-system
+   ```
+3. Buka browser dan akses: 👉 **`http://localhost:5000`**
 
 ---
 

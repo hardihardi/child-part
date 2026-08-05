@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: ikuyo-vision-system
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./database.db:/app/database.db
+      - ./static/uploads:/app/static/uploads
+    restart: unless-stopped
