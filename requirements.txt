@@ -1,0 +1,5 @@
+flask==3.0.0
+opencv-python==4.8.1.78
+numpy==1.26.2
+Flask-Login==0.6.3
+Werkzeug==3.0.1

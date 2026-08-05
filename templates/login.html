@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[80vh] w-full">
+    <div class="sneat-card w-full max-w-md p-10">
+        <div class="text-center mb-8 flex flex-col items-center">
+            <img src="{{ url_for('static', filename='img/logo.png') }}?v={{ cache_buster }}" alt="Logo"
+                class="w-16 h-16 mb-4 object-contain">
+            <h2 class="text-3xl font-bold text-[#696cff] tracking-tight">{{ app_name }}</h2>
+            <p class="text-gray-500 mt-2 text-sm">Welcome to Automated Clip Inspection System</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}" class="space-y-5">
+            <div>
+                <label for="username"
+                    class="block text-sm font-semibold text-gray-700 mb-1 uppercase tracking-wide">Username</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-user text-sm"></i>
+                    </div>
+                    <input type="text" id="username" name="username" required
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#696cff] focus:border-transparent transition-all"
+                        placeholder="Masukkan username">
+                </div>
+            </div>
+
+            <div>
+                <label for="password"
+                    class="block text-sm font-semibold text-gray-700 mb-1 uppercase tracking-wide">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-lock text-sm"></i>
+                    </div>
+                    <input type="password" id="password" name="password" required
+                        class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#696cff] focus:border-transparent transition-all"
+                        placeholder="Masukkan password">
+                    <button type="button" onclick="togglePasswordVisibility()"
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-[#696cff] focus:outline-none transition-colors">
+                        <i id="togglePasswordIcon" class="fas fa-eye text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full sneat-btn-primary font-bold py-2.5 px-4 rounded-md mt-4">
+                Sign In
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.getElementById('togglePasswordIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
+{% endblock %}

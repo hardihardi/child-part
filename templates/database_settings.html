@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Pengaturan Database{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-[#566a7f]">Pengaturan Database</h1>
+    <p class="text-gray-500 text-sm mt-1">Kelola pencadangan, pemulihan, dan reset data inspeksi sistem.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Card Backup -->
+    <div class="sneat-card p-6 flex flex-col h-full">
+        <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-xl">
+            <i class="fas fa-download"></i>
+        </div>
+        <h3 class="text-lg font-bold text-[#566a7f] mb-2">Backup Database</h3>
+        <p class="text-gray-500 text-sm flex-grow mb-4">Unduh salinan file database SQLite saat ini (termasuk semua data pengguna, riwayat inspeksi, dan pengaturan) ke komputer Anda untuk keamanan data.</p>
+        <a href="{{ url_for('db_backup') }}" class="sneat-btn-primary py-2 px-4 text-center text-sm w-full block">
+            <i class="fas fa-download mr-2"></i>Unduh File Backup
+        </a>
+    </div>
+
+    <!-- Card Restore -->
+    <div class="sneat-card p-6 flex flex-col h-full border-l-4 border-yellow-400">
+        <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mb-4 text-xl">
+            <i class="fas fa-upload"></i>
+        </div>
+        <h3 class="text-lg font-bold text-[#566a7f] mb-2">Restore Database</h3>
+        <p class="text-gray-500 text-sm flex-grow mb-4">Unggah file backup (database.db) untuk memulihkan sistem ke kondisi sebelumnya. Tindakan ini akan menimpa seluruh data yang ada saat ini!</p>
+        <form action="{{ url_for('db_restore') }}" method="POST" enctype="multipart/form-data" class="w-full mt-auto" onsubmit="event.preventDefault(); openGlobalConfirm('PERINGATAN: Memulihkan database akan menimpa semua data saat ini dan sistem akan restart. Apakah Anda yakin?', this, 'Konfirmasi Pemulihan Database');">
+            <input type="file" name="db_file" accept=".db" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 mb-4 border border-gray-200 rounded p-1">
+            <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow text-sm w-full">
+                <i class="fas fa-upload mr-2"></i>Unggah & Pulihkan
+            </button>
+        </form>
+    </div>
+
+    <!-- Card Reset -->
+    <div class="sneat-card p-6 flex flex-col h-full border-l-4 border-red-500">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 text-xl">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <h3 class="text-lg font-bold text-[#566a7f] mb-2">Reset Log & Data Folder</h3>
+        <p class="text-gray-500 text-sm flex-grow mb-4">Menghapus seluruh riwayat inspeksi, log aktivitas, dan foto pada folder data (`static/data`). Data pengguna dan pengaturan sistem akan tetap dipertahankan. Tindakan ini tidak dapat dibatalkan!</p>
+        <form action="{{ url_for('db_reset') }}" method="POST" class="w-full mt-auto" onsubmit="event.preventDefault(); openGlobalConfirm('BAHAYA: Seluruh riwayat inspeksi, aktivitas, dan berkas foto pada folder data akan dihapus permanen. Lanjutkan?', this, 'Konfirmasi Reset Database');">
+            <div class="mb-4">
+                <label class="block text-gray-500 text-xs font-semibold mb-1">Konfirmasi Password Admin</label>
+                <input type="password" name="admin_password" required class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-red-500" placeholder="Masukkan password Anda">
+            </div>
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow text-sm w-full">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Reset Semua Riwayat
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

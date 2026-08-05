@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operator Dashboard - Child Part Assembly</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">PT Ikuyo Indonesia</div>
+        <nav>
+            <a href="/" class="active">Operator View</a>
+            <a href="/dashboard">QC Dashboard</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <h1>Real-time Assembly Monitoring</h1>
+        <div class="video-container">
+            <!-- Flask route that streams the video -->
+            <img src="{{ url_for('video_feed') }}" alt="Video Stream" id="video-stream">
+        </div>
+        
+        <div class="status-panel">
+            <h2>System Status</h2>
+            <p>Model: Custom YOLOv5 (ONNX)</p>
+            <p>Target: 1 Klip Kiri (klip_lh), 1 Klip Kanan (klip_rh)</p>
+            <div class="legend">
+                <span class="legend-item"><span class="box box-green"></span> OK</span>
+                <span class="legend-item"><span class="box box-red"></span> NG (Missing Part)</span>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

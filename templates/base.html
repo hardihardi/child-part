@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_name }}{% endblock %} - {{ app_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}?v={{ cache_buster }}">
+    <style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background-color: #f5f5f9;
+            color: #566a7f;
+        }
+
+        .sneat-shadow {
+            box-shadow: 0 2px 6px 0 rgba(67, 89, 113, 0.12);
+        }
+
+        .sneat-nav-link {
+            color: #697a8d;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .sneat-nav-link:hover {
+            background-color: rgba(67, 89, 113, 0.04);
+            color: #696cff;
+        }
+
+        .sneat-nav-link.active {
+            background-color: rgba(105, 108, 255, 0.16) !important;
+            color: #696cff !important;
+            font-weight: 600;
+        }
+
+        .sneat-btn-primary {
+            background-color: #696cff;
+            color: #fff;
+            box-shadow: 0 0.125rem 0.25rem 0 rgba(105, 108, 255, 0.4);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .sneat-btn-primary:hover {
+            background-color: #5f61e6;
+            transform: translateY(-1px);
+        }
+
+        .sneat-card {
+            background-color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 6px 0 rgba(67, 89, 113, 0.12);
+            border: 0 solid #d9dee3;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+    {% if current_user.is_authenticated %}
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebarBackdrop" onclick="closeMobileSidebar()"
+        class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300 opacity-0">
+    </div>
+
+    <!-- Sidebar (Light Theme) -->
+    <aside id="mainSidebar"
+        class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col h-full z-50 transform -translate-x-full md:translate-x-0 md:static md:z-20 transition-transform duration-300 ease-in-out shrink-0">
+        <div class="p-6 text-left flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='img/logo.png') }}?v={{ cache_buster }}" alt="Logo"
+                    class="w-8 h-8 mr-3 object-contain">
+                <h1 class="text-2xl font-bold text-[#696cff] tracking-tight">{{ app_name }}</h1>
+            </div>
+            <!-- Close Button (Mobile Only) -->
+            <button onclick="closeMobileSidebar()"
+                class="md:hidden text-gray-400 hover:text-gray-600 focus:outline-none p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+            {% set current_endpoint = request.endpoint %}
+
+            {% if current_user.role in ['Admin', 'QC'] %}
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4 px-2">Dashboards</p>
+            <a href="{{ url_for('dashboard') }}"
+                class="sneat-nav-link block p-2.5 mb-1 flex items-center {% if current_endpoint == 'dashboard' %}active{% endif %}"><i
+                    class="fas fa-home w-6 text-center mr-2"></i> Dashboard</a>
+            <a href="{{ url_for('analisa_hasil') }}"
+                class="flex items-center px-4 py-2.5 mt-2 rounded-lg text-sm font-medium transition-colors {% if current_endpoint == 'analisa_hasil' %}bg-[#e7e7ff] text-[#696cff]{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-search w-5 mr-3"></i>Analisa Hasil
+            </a>
+            <a href="{{ url_for('reports') }}"
+                class="flex items-center px-4 py-2.5 mt-1 rounded-lg text-sm font-medium transition-colors {% if current_endpoint == 'reports' %}bg-[#e7e7ff] text-[#696cff]{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-file-alt w-5 mr-3"></i>Laporan
+            </a>
+            <a href="{{ url_for('evaluation') }}"
+                class="flex items-center px-4 py-2.5 mt-1 rounded-lg text-sm font-medium transition-colors {% if current_endpoint == 'evaluation' %}bg-[#e7e7ff] text-[#696cff]{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-brain w-5 mr-3"></i>Evaluasi Model
+            </a>
+            {% endif %}
+
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4 px-2">Modules</p>
+            <a href="{{ url_for('camera_view') }}"
+                class="sneat-nav-link block p-2.5 mb-1 flex items-center {% if current_endpoint == 'camera_view' %}active{% endif %}"><i
+                    class="fas fa-video w-6 text-center mr-2"></i> Kamera Live</a>
+
+            {% if current_user.role == 'Admin' %}
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4 px-2">Settings</p>
+            <a href="{{ url_for('users') }}"
+                class="sneat-nav-link block p-2.5 mb-1 flex items-center {% if current_endpoint == 'users' %}active{% endif %}"><i
+                    class="fas fa-users w-6 text-center mr-2"></i> Pengguna</a>
+            <a href="{{ url_for('activity_logs') }}"
+                class="sneat-nav-link block p-2.5 mb-1 flex items-center {% if current_endpoint == 'activity_logs' %}active{% endif %}"><i
+                    class="fas fa-history w-6 text-center mr-2"></i> Aktivitas</a>
+            <a href="{{ url_for('settings') }}"
+                class="sneat-nav-link block p-2.5 mb-1 flex items-center {% if current_endpoint == 'settings' %}active{% endif %}"><i
+                    class="fas fa-cog w-6 text-center mr-2"></i> Sistem</a>
+            <a href="{{ url_for('database_settings') }}"
+                class="sneat-nav-link block p-2.5 mb-1 flex items-center {% if current_endpoint == 'database_settings' %}active{% endif %}"><i
+                    class="fas fa-database w-6 text-center mr-2"></i> Database</a>
+            {% endif %}
+        </nav>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden w-full relative">
+
+        {% if current_user.is_authenticated %}
+        <!-- Top Navbar -->
+        <header
+            class="bg-white/80 backdrop-blur-md sneat-shadow mx-3 sm:mx-6 mt-4 rounded-lg px-4 sm:px-6 py-3 flex justify-between items-center z-30 sticky top-4">
+            <div class="flex items-center text-gray-500 relative flex-1 max-w-xs sm:max-w-md"
+                id="globalSearchContainer">
+                <!-- Mobile Sidebar Toggle Button -->
+                <button onclick="toggleMobileSidebar()"
+                    class="md:hidden p-1.5 mr-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-[#696cff] focus:outline-none transition-colors">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <i class="fas fa-search mr-2 sm:mr-3 text-gray-400"></i>
+                <input type="text" id="globalSearchInput" placeholder="Search (Ctrl+/)" autocomplete="off"
+                    class="bg-transparent border-none outline-none text-sm w-full focus:ring-0 placeholder-gray-400">
+
+                <!-- Search Results Dropdown -->
+                <div id="globalSearchResults"
+                    class="hidden absolute top-full left-0 mt-4 w-[28rem] bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden flex flex-col max-h-[32rem]">
+                    <div
+                        class="p-3 text-xs font-semibold text-gray-400 bg-gray-50/80 border-b border-gray-100 uppercase tracking-wider">
+                        Hasil Pencarian</div>
+                    <div id="globalSearchContent" class="overflow-y-auto p-2">
+                        <!-- dynamic results will be injected here -->
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 relative">
+                <!-- Notifications -->
+                <div class="relative flex items-center mr-1">
+                    <button onclick="toggleNotificationDropdown(event)"
+                        class="text-gray-400 hover:text-[#696cff] hover:bg-gray-100 p-2 rounded-full relative transition-colors focus:outline-none">
+                        <i class="fas fa-bell text-[1.1rem]"></i>
+                        <span id="notifBadge" class="hidden absolute top-1 right-1 flex h-2.5 w-2.5">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span
+                                class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white box-content"></span>
+                        </span>
+                    </button>
+
+                    <div id="notificationDropdown"
+                        class="hidden absolute right-0 top-full mt-3 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden sneat-shadow flex flex-col max-h-[28rem]">
+                        <div
+                            class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-white flex-shrink-0 shadow-sm z-10">
+                            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Notifikasi</h3>
+                            <span id="notifCount"
+                                class="bg-[#e7e7ff] text-[#696cff] text-xs font-bold px-2 py-0.5 rounded-full">0
+                                Baru</span>
+                        </div>
+                        <div id="notifList" class="overflow-y-auto flex-1 bg-gray-50/30">
+                            <!-- Populated by JS -->
+                            <div class="p-6 text-center text-sm text-gray-400">
+                                <i class="fas fa-spinner fa-spin text-xl mb-2"></i><br>Memuat...
+                            </div>
+                        </div>
+                        <div class="px-4 py-2.5 border-t border-gray-100 text-center bg-white flex-shrink-0">
+                            <span class="text-xs font-semibold text-gray-400">Hanya menampilkan riwayat terbaru</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-6 w-px bg-gray-200 mx-2"></div>
+                <!-- Dropdown Toggle -->
+                <div class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    onclick="toggleHeaderDropdown(event)">
+                    <div class="text-right hidden md:block">
+                        <p class="text-xs font-bold text-gray-800 leading-snug">{{ current_user.nama if
+                            current_user.nama else current_user.username }}</p>
+                        <p class="text-[11px] text-gray-400 leading-tight">@{{ current_user.username }} • <span
+                                class="text-[#696cff] font-semibold">{{ current_user.role }}</span></p>
+                    </div>
+                    {% set cur_avatar = avatar_url(current_user.foto) %}
+                    {% if cur_avatar %}
+                    <img src="{{ cur_avatar }}" alt="Avatar"
+                        class="h-10 w-10 rounded-full object-cover shadow-sm border border-gray-200 flex-shrink-0">
+                    {% else %}
+                    <div
+                        class="h-10 w-10 rounded-full bg-[#696cff] text-white flex items-center justify-center font-bold shadow-sm flex-shrink-0 text-sm">
+                        {{ (current_user.nama or current_user.username)[0]|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div id="headerDropdown"
+                    class="hidden absolute right-0 top-full mt-2 w-60 bg-white rounded-lg shadow-lg border border-gray-100 z-50 overflow-hidden py-2 sneat-shadow">
+                    <div class="px-4 py-3 border-b border-gray-100 flex items-center space-x-3">
+                        {% if cur_avatar %}
+                        <img src="{{ cur_avatar }}" alt="Avatar"
+                            class="h-10 w-10 rounded-full object-cover shadow-sm border border-gray-200 flex-shrink-0">
+                        {% else %}
+                        <div
+                            class="h-10 w-10 rounded-full bg-[#696cff] text-white flex items-center justify-center font-bold shadow-sm flex-shrink-0 text-sm">
+                            {{ (current_user.nama or current_user.username)[0]|upper }}
+                        </div>
+                        {% endif %}
+                        <div class="flex flex-col min-w-0">
+                            <p class="text-xs font-bold text-gray-800 truncate">{{ current_user.nama if
+                                current_user.nama else current_user.username }}</p>
+                            <p class="text-[11px] text-gray-400 truncate">@{{ current_user.username }}</p>
+                            <span
+                                class="inline-block mt-0.5 px-2 py-0.5 bg-indigo-50 text-[#696cff] rounded text-[10px] font-bold w-fit">{{
+                                current_user.role }}</span>
+                        </div>
+                    </div>
+
+                    <a href="#"
+                        onclick="openMyProfileModal(); document.getElementById('headerDropdown').classList.add('hidden'); event.preventDefault();"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#696cff] transition-colors flex items-center">
+                        <i class="fas fa-user-cog w-5 mr-2 text-center text-gray-400"></i> Pengaturan Profil
+                    </a>
+
+                    <div class="border-t border-gray-100 my-1"></div>
+
+                    <a href="{{ url_for('logout') }}"
+                        class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center">
+                        <i class="fas fa-power-off w-5 mr-2 text-center text-red-400"></i> Keluar
+                    </a>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto w-full">
+            <div class="p-6 {% if current_user.is_authenticated %}mt-2{% endif %} w-full mx-auto">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div
+                    class="mb-6 p-4 rounded-lg {% if category == 'error' %}bg-red-50 text-red-600 border border-red-200{% else %}bg-green-50 text-green-600 border border-green-200{% endif %} flex items-center sneat-shadow">
+                    <i
+                        class="{% if category == 'error' %}fas fa-exclamation-circle{% else %}fas fa-check-circle{% endif %} mr-3"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+        {% if current_user.is_authenticated %}
+
+        <!-- Global Confirmation Modal -->
+        <div id="globalConfirmModal"
+            class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-[60] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300"
+                id="globalConfirmModalBox">
+                <div class="px-6 py-5 flex items-start space-x-4">
+                    <div
+                        class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-1 flex-1">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900" id="globalConfirmTitle">Konfirmasi
+                            Tindakan</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="globalConfirmMessage">Apakah Anda yakin ingin
+                                melanjutkan?</p>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row-reverse rounded-b-xl gap-2">
+                    <button type="button" id="globalConfirmBtnYes" onclick="executeGlobalConfirm()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                        Ya, Lanjutkan
+                    </button>
+                    <button type="button" onclick="cancelGlobalConfirm()"
+                        class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#696cff] sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Settings Modal -->
+        <div id="myProfileModal"
+            class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm">
+            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-full flex flex-col">
+                <div
+                    class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-xl flex-shrink-0">
+                    <h3 class="text-xl font-bold text-[#566a7f]">Pengaturan Profil</h3>
+                    <button onclick="document.getElementById('myProfileModal').classList.add('hidden')"
+                        class="text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                <form method="POST" action="{{ url_for('profile_settings') }}" enctype="multipart/form-data"
+                    class="flex flex-col min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <!-- Photo Upload -->
+                            <div class="col-span-1 flex flex-col items-center justify-start space-y-4">
+                                <div
+                                    class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-gray-100 overflow-hidden shadow-sm relative group bg-gray-50 flex items-center justify-center">
+                                    <img id="my_foto_preview" src="{{ cur_avatar if cur_avatar else '' }}"
+                                        class="w-full h-full object-cover {% if not cur_avatar %}hidden{% endif %}">
+                                    <div id="my_foto_placeholder"
+                                        class="text-gray-400 flex flex-col items-center {% if cur_avatar %}hidden{% endif %}">
+                                        <i class="fas fa-camera text-2xl md:text-3xl mb-2"></i>
+                                        <span class="text-xs font-semibold">Ganti Foto</span>
+                                    </div>
+                                </div>
+                                <label
+                                    class="cursor-pointer sneat-btn-primary py-2 px-4 rounded-md shadow-sm text-sm w-full text-center hover:-translate-y-0.5 transition-transform">
+                                    <i class="fas fa-upload mr-2"></i> Ganti Foto
+                                    <input type="file" name="foto" accept="image/*" class="hidden"
+                                        onchange="previewMyProfileImage(this)">
+                                </label>
+                            </div>
+
+                            <!-- Inputs -->
+                            <div class="col-span-1 md:col-span-2 space-y-5">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
+                                    <input type="text" name="nama"
+                                        value="{{ '' if current_user.nama is none else current_user.nama }}" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#696cff] focus:border-transparent text-sm transition-all bg-gray-50 focus:bg-white">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+                                    <input type="text" name="username" value="{{ current_user.username }}" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#696cff] focus:border-transparent text-sm transition-all bg-gray-50 focus:bg-white">
+                                    <p class="text-xs text-gray-500 mt-1">Mengubah username akan mengubah nama yang Anda
+                                        gunakan untuk login.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Password Baru
+                                        (Opsional)</label>
+                                    <input type="password" name="password"
+                                        placeholder="Kosongkan jika tidak ingin mengubah"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#696cff] focus:border-transparent text-sm transition-all bg-gray-50 focus:bg-white">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100 rounded-b-xl flex-shrink-0">
+                        <button type="button"
+                            onclick="document.getElementById('myProfileModal').classList.add('hidden')"
+                            class="px-5 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg text-sm font-semibold transition-colors">Batal</button>
+                        <button type="submit"
+                            class="px-5 py-2 sneat-btn-primary text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all">Simpan
+                            Profil</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function toggleHeaderDropdown(event) {
+                event.stopPropagation();
+                const dropdown = document.getElementById('headerDropdown');
+                const notifDropdown = document.getElementById('notificationDropdown');
+
+                // Close notification dropdown if it's open
+                if (notifDropdown && !notifDropdown.classList.contains('hidden')) {
+                    notifDropdown.classList.add('hidden');
+                }
+
+                if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                }
+            }
+
+            function toggleNotificationDropdown(event) {
+                event.stopPropagation();
+                const dropdown = document.getElementById('notificationDropdown');
+                const headerDropdown = document.getElementById('headerDropdown');
+
+                // Close profile dropdown if it's open
+                if (headerDropdown && !headerDropdown.classList.contains('hidden')) {
+                    headerDropdown.classList.add('hidden');
+                }
+
+                if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                    if (!dropdown.classList.contains('hidden')) {
+                        fetchNotifications();
+                    }
+                }
+            }
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function (event) {
+                const headerDropdown = document.getElementById('headerDropdown');
+                if (headerDropdown && !headerDropdown.classList.contains('hidden') && !event.target.closest('#headerDropdown') && !event.target.closest('[onclick="toggleHeaderDropdown(event)"]')) {
+                    headerDropdown.classList.add('hidden');
+                }
+
+                const notifDropdown = document.getElementById('notificationDropdown');
+                if (notifDropdown && !notifDropdown.classList.contains('hidden') && !event.target.closest('#notificationDropdown') && !event.target.closest('[onclick="toggleNotificationDropdown(event)"]')) {
+                    notifDropdown.classList.add('hidden');
+                }
+            });
+
+            function fetchNotifications() {
+                fetch("{{ url_for('api_notifications') }}")
+                    .then(response => {
+                        // Check if response is redirected to login (HTML)
+                        if (response.redirected && response.url.includes('login') || !response.headers.get('content-type')?.includes('application/json')) {
+                            throw new Error('Session expired');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const notifList = document.getElementById('notifList');
+                        const badge = document.getElementById('notifBadge');
+                        const count = document.getElementById('notifCount');
+
+                        if (data.notifications && data.notifications.length > 0) {
+                            badge.classList.remove('hidden');
+                            count.textContent = data.notifications.length + ' Baru';
+
+                            let html = '';
+                            data.notifications.forEach(n => {
+                                const isDefect = n.type === 'defect';
+                                const icon = isDefect ? 'fa-exclamation-triangle text-red-500' : 'fa-info-circle text-blue-500';
+                                const bg = isDefect ? 'bg-red-50' : 'bg-blue-50';
+
+                                html += `
+                                <div class="px-4 py-3 border-b border-gray-50 hover:bg-white transition-colors flex items-start">
+                                    <div class="flex-shrink-0 mt-1 h-8 w-8 rounded-full ${bg} flex items-center justify-center shadow-sm">
+                                        <i class="fas ${icon}"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-semibold text-gray-800">${n.title}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${n.message}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1.5"><i class="far fa-clock mr-1"></i>${n.timestamp}</p>
+                                    </div>
+                                </div>
+                            `;
+                            });
+                            notifList.innerHTML = html;
+                        } else {
+                            badge.classList.add('hidden');
+                            count.textContent = '0 Baru';
+                            notifList.innerHTML = `
+                            <div class="p-8 text-center text-sm text-gray-400">
+                                <i class="fas fa-check-circle text-4xl mb-3 text-green-200"></i><br>
+                                Tidak ada aktivitas terbaru.
+                            </div>
+                        `;
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Failed to load notifications", err);
+                        if (err.message === 'Session expired') {
+                            document.getElementById('notifList').innerHTML = '<div class="p-6 text-xs text-red-400 text-center">Sesi berakhir. <a href="/login" class="underline font-bold">Masuk kembali</a>.</div>';
+                        } else {
+                            document.getElementById('notifList').innerHTML = '<div class="p-6 text-xs text-red-400 text-center">Gagal memuat notifikasi.</div>';
+                        }
+                    });
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                fetchNotifications();
+            });
+
+            function openMyProfileModal() {
+                document.getElementById('myProfileModal').classList.remove('hidden');
+            }
+
+            function previewMyProfileImage(input) {
+                const preview = document.getElementById('my_foto_preview');
+                const placeholder = document.getElementById('my_foto_placeholder');
+
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        preview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            // Global Confirmation Modal Logic
+            let currentFormToSubmit = null;
+
+            function openGlobalConfirm(message, formElement, title = "Konfirmasi Tindakan") {
+                const modal = document.getElementById('globalConfirmModal');
+                const modalBox = document.getElementById('globalConfirmModalBox');
+
+                document.getElementById('globalConfirmMessage').innerText = message;
+                document.getElementById('globalConfirmTitle').innerText = title;
+                currentFormToSubmit = formElement;
+
+                modal.classList.remove('hidden');
+                // Small timeout to allow transition to take effect
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalBox.classList.remove('scale-95');
+                    modalBox.classList.add('scale-100');
+                }, 10);
+            }
+
+            function cancelGlobalConfirm() {
+                const modal = document.getElementById('globalConfirmModal');
+                const modalBox = document.getElementById('globalConfirmModalBox');
+
+                modal.classList.add('opacity-0');
+                modalBox.classList.remove('scale-100');
+                modalBox.classList.add('scale-95');
+
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    currentFormToSubmit = null;
+                }, 300);
+            }
+
+            function executeGlobalConfirm() {
+                if (currentFormToSubmit) {
+                    // Submit the form programmatically (bypassing the onsubmit handler to avoid infinite loop)
+                    currentFormToSubmit.removeAttribute('onsubmit');
+                    currentFormToSubmit.submit();
+                }
+                cancelGlobalConfirm();
+            }
+
+            // Global Search Logic
+            document.addEventListener("DOMContentLoaded", function () {
+                const searchInput = document.getElementById('globalSearchInput');
+                const searchResults = document.getElementById('globalSearchResults');
+                const searchContent = document.getElementById('globalSearchContent');
+                let searchTimeout = null;
+
+                if (searchInput) {
+                    // Keyboard Shortcut Ctrl+/
+                    document.addEventListener('keydown', function (e) {
+                        if (e.ctrlKey && e.key === '/') {
+                            e.preventDefault();
+                            searchInput.focus();
+                        }
+                    });
+
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function (e) {
+                        if (!document.getElementById('globalSearchContainer').contains(e.target)) {
+                            searchResults.classList.add('hidden');
+                        }
+                    });
+
+                    searchInput.addEventListener('focus', function () {
+                        if (this.value.trim().length > 0) {
+                            searchResults.classList.remove('hidden');
+                        }
+                    });
+
+                    searchInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); // Prevent accidental form submissions if any
+                        }
+                    });
+
+                    searchInput.addEventListener('input', function () {
+                        const query = this.value.trim();
+
+                        if (query.length === 0) {
+                            searchResults.classList.add('hidden');
+                            return;
+                        }
+
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => {
+                            fetch(`/api/global_search?q=${encodeURIComponent(query)}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    searchResults.classList.remove('hidden');
+                                    searchContent.innerHTML = '';
+
+                                    let totalResults = data.modules.length + data.users.length + data.logs.length;
+
+                                    if (totalResults === 0) {
+                                        searchContent.innerHTML = '<div class="p-6 text-center text-gray-500 text-sm">Tidak ada hasil ditemukan.</div>';
+                                        return;
+                                    }
+
+                                    // Helper to render sections
+                                    const renderSection = (title, items) => {
+                                        if (items.length === 0) return '';
+                                        let html = `<div class="mb-2"><div class="px-3 py-1 text-xs font-semibold text-[#696cff] bg-[#e7e7ff] rounded-md inline-block mb-2 ml-2 mt-2">${title}</div>`;
+                                        items.forEach(item => {
+                                            html += `
+                                            <a href="${item.url}" class="flex items-center px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                                                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-[#696cff] group-hover:text-white transition-colors">
+                                                    <i class="fas ${item.icon} text-sm"></i>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <div class="text-sm font-medium text-gray-700">${item.name}</div>
+                                                    ${item.desc ? `<div class="text-xs text-gray-400">${item.desc}</div>` : ''}
+                                                </div>
+                                            </a>
+                                        `;
+                                        });
+                                        html += `</div>`;
+                                        return html;
+                                    };
+
+                                    let finalHtml = '';
+                                    finalHtml += renderSection('Menu & Modul', data.modules);
+                                    finalHtml += renderSection('Pengguna', data.users);
+                                    finalHtml += renderSection('Aktivitas Sistem', data.logs);
+
+                                    searchContent.innerHTML = finalHtml;
+                                })
+                                .catch(err => {
+                                    console.error('Search error:', err);
+                                });
+                        }, 300); // 300ms debounce
+                    });
+                }
+            });
+
+            // Mobile Sidebar Toggle Logic
+            function toggleMobileSidebar() {
+                const sidebar = document.getElementById('mainSidebar');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (!sidebar || !backdrop) return;
+
+                const isOpen = sidebar.classList.contains('translate-x-0');
+                if (isOpen) {
+                    closeMobileSidebar();
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebar.classList.add('translate-x-0');
+                    backdrop.classList.remove('hidden');
+                    setTimeout(() => {
+                        backdrop.classList.remove('opacity-0');
+                        backdrop.classList.add('opacity-100');
+                    }, 10);
+                }
+            }
+
+            function closeMobileSidebar() {
+                const sidebar = document.getElementById('mainSidebar');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (!sidebar || !backdrop) return;
+
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => {
+                    backdrop.classList.add('hidden');
+                }, 300);
+            }
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 768) {
+                    const sidebar = document.getElementById('mainSidebar');
+                    const backdrop = document.getElementById('sidebarBackdrop');
+                    if (sidebar && backdrop) {
+                        sidebar.classList.remove('-translate-x-full', 'translate-x-0');
+                        backdrop.classList.add('hidden', 'opacity-0');
+                        backdrop.classList.remove('opacity-100');
+                    }
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const nav = document.querySelector('#mainSidebar nav');
+                if (nav) {
+                    nav.addEventListener('click', function (e) {
+                        if (e.target.closest('a') && window.innerWidth < 768) {
+                            closeMobileSidebar();
+                        }
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+</body>
+
+</html>

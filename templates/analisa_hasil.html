@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Analisa Hasil Deteksi{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-bold text-[#566a7f]">Analisa Hasil Deteksi (History Log)</h1>
+        <p class="text-gray-500 text-sm mt-1">Riwayat deteksi Kamera AI beserta bukti visual (Snapshot).</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="sneat-card p-4 md:p-6 mb-6">
+    <form method="GET" action="{{ url_for('analisa_hasil') }}" class="flex flex-col md:flex-row justify-between items-end gap-4">
+        
+        <!-- Left side: Filters Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full md:w-auto flex-grow">
+            <!-- Cari Data -->
+            <div class="w-full">
+                <label class="block text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Cari Data</label>
+                <input type="text" name="search" value="{{ search or '' }}" placeholder="Operator / Status..." class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-[#696cff]">
+            </div>
+            
+            <!-- Status -->
+            <div class="w-full">
+                <label class="block text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-[#696cff] bg-white">
+                    <option value="">Semua Status</option>
+                    <option value="OK" {% if request.args.get('status') == 'OK' %}selected{% endif %}>OK</option>
+                    <option value="NG" {% if request.args.get('status') == 'NG' %}selected{% endif %}>NG</option>
+                </select>
+            </div>
+            
+            <!-- Dari -->
+            <div class="w-full">
+                <label class="block text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Dari</label>
+                <input type="date" name="start_date" value="{{ start_date or '' }}" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-[#696cff]">
+            </div>
+            
+            <!-- Sampai -->
+            <div class="w-full">
+                <label class="block text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Sampai</label>
+                <input type="date" name="end_date" value="{{ end_date or '' }}" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-[#696cff]">
+            </div>
+        </div>
+
+        <!-- Action & Export Buttons -->
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto whitespace-nowrap">
+            <div class="flex space-x-2 w-full sm:w-auto justify-end sm:justify-start">
+                <button type="submit" class="bg-[#696cff] hover:bg-[#5f61e6] text-white font-semibold py-2 px-4 rounded shadow text-sm transition-colors flex-1 sm:flex-none justify-center flex items-center">
+                    <i class="fas fa-search mr-2"></i> Cari
+                </button>
+                <a href="{{ url_for('analisa_hasil') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded shadow text-sm transition-colors flex-1 sm:flex-none text-center flex items-center justify-center">
+                    Reset
+                </a>
+            </div>
+            
+            <div class="flex space-x-2 w-full sm:w-auto justify-end">
+                <a href="{{ url_for('export_analisa_csv', search=search, status=status_filter, start_date=start_date, end_date=end_date) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded shadow flex items-center justify-center text-sm transition-colors flex-1 sm:flex-none">
+                    <i class="fas fa-file-csv mr-2"></i> CSV
+                </a>
+                <button type="button" onclick="exportPDF('analisa-content', 'Analisa_Hasil_Deteksi.pdf')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded shadow flex items-center justify-center text-sm transition-colors flex-1 sm:flex-none">
+                    <i class="fas fa-file-pdf mr-2"></i> PDF
+                </button>
+            </div>
+        </div>
+        
+    </form>
+</div>
+
+<!-- Data Table -->
+<div class="sneat-card overflow-hidden" id="analisa-content">
+    
+    <!-- Hidden Print Header for PDF -->
+    <div id="print-header" class="hidden p-6 border-b border-gray-100 bg-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+                <div>
+                    <h2 class="text-xl font-bold text-[#696cff]">{{ app_name }}</h2>
+                    <p class="text-sm text-gray-500">Laporan Analisa Hasil Deteksi AI</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-semibold text-gray-700">Dicetak oleh: {{ current_user.nama or current_user.username }}</p>
+                <p class="text-xs text-gray-500" id="print-timestamp"></p>
+            </div>
+        </div>
+        {% if search or status_filter or start_date or end_date %}
+        <div class="bg-gray-50 p-3 rounded text-xs text-gray-600 flex flex-wrap gap-4 mt-2">
+            {% if search %}<p><strong>Pencarian:</strong> {{ search }}</p>{% endif %}
+            {% if status_filter %}<p><strong>Status:</strong> {{ status_filter }}</p>{% endif %}
+            {% if start_date or end_date %}<p><strong>Periode:</strong> {{ start_date or 'Awal' }} s/d {{ end_date or 'Sekarang' }}</p>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+            <thead class="bg-gray-50/50">
+                <tr>
+                    <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm w-16 text-center">ID</th>
+                    <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm w-48">Waktu (Timestamp)</th>
+                    <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">Operator</th>
+                    <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm text-center">Status</th>
+                    <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm text-center">Akurasi (Conf)</th>
+                    <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm text-center">Bukti Snapshot</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="border-b border-gray-100 p-4 text-sm text-gray-600 text-center">{{ log.id }}</td>
+                    <td class="border-b border-gray-100 p-4 text-sm text-gray-600">{{ log.timestamp }}</td>
+                    <td class="border-b border-gray-100 p-4 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2.5 min-w-[150px]">
+                            {% set op_avatar = avatar_url(log.operator_foto) %}
+                            {% if op_avatar %}
+                                <img src="{{ op_avatar }}" 
+                                     alt="{{ log.operator_nama or log.operator_username }}" 
+                                     class="w-9 h-9 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0">
+                            {% else %}
+                                <div class="w-9 h-9 rounded-full bg-[#696cff] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
+                                    {{ (log.operator_nama or log.operator_username or 'O')[0]|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-xs font-semibold text-gray-800 truncate leading-snug">
+                                    {{ log.operator_nama or log.operator_username or 'Operator' }}
+                                </span>
+                                <span class="text-[11px] text-gray-400 truncate leading-tight">
+                                    @{{ log.operator_username or 'operator' }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="border-b border-gray-100 p-4 text-center">
+                        {% if log.status_result == 'OK' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">OK</span>
+                        {% else %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">NG</span>
+                        {% endif %}
+                    </td>
+                    <td class="border-b border-gray-100 p-4 text-sm text-center">
+                        {% if log.confidence_score != None %}
+                            <span class="{% if log.confidence_score >= 0.8 %}text-green-600{% elif log.confidence_score >= 0.5 %}text-yellow-600{% else %}text-red-600{% endif %} font-semibold">
+                                {{ "%.2f"|format(log.confidence_score * 100) }}%
+                            </span>
+                        {% else %}
+                            <span class="text-gray-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="border-b border-gray-100 p-4 text-center">
+                        {% if log.raw_image_path %}
+                            <a href="{{ url_for('static', filename=log.raw_image_path.split('static/')[1]) if 'static/' in log.raw_image_path else '/' + log.raw_image_path }}" target="_blank" class="inline-block relative group">
+                                <img src="{{ url_for('static', filename=log.raw_image_path.split('static/')[1]) if 'static/' in log.raw_image_path else '/' + log.raw_image_path }}" alt="Snapshot" class="h-12 w-16 object-cover rounded border border-gray-300 shadow-sm cursor-pointer transition-transform transform group-hover:scale-110">
+                            </a>
+                        {% else %}
+                            <span class="text-xs text-gray-400 italic">Tidak ada foto</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="p-8 text-center text-gray-500">Belum ada riwayat deteksi.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-sm text-gray-500">Halaman {{ page }} dari {{ total_pages }}</span>
+        <div class="flex space-x-1">
+            {% if page > 1 %}
+            <a href="{{ url_for('analisa_hasil', page=page-1, search=search, status=status_filter, start_date=start_date, end_date=end_date) }}" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">Sebelumnya</a>
+            {% endif %}
+            
+            {% if page < total_pages %}
+            <a href="{{ url_for('analisa_hasil', page=page+1, search=search, status=status_filter, start_date=start_date, end_date=end_date) }}" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">Berikutnya</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- html2pdf.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+    function exportPDF(elementId, filename) {
+        const element = document.getElementById(elementId);
+        
+        // Hide pagination temporarily
+        const pagination = element.querySelector('.px-6.py-4.border-t');
+        if (pagination) pagination.style.display = 'none';
+        
+        // Show print header
+        const printHeader = document.getElementById('print-header');
+        if (printHeader) {
+            printHeader.classList.remove('hidden');
+            const now = new Date();
+            document.getElementById('print-timestamp').innerText = 'Waktu Cetak: ' + now.toLocaleString('id-ID');
+        }
+        
+        const opt = {
+            margin:       0.5,
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+            if (pagination) pagination.style.display = 'flex';
+            if (printHeader) printHeader.classList.add('hidden');
+        });
+    }
+</script>
+{% endblock %}

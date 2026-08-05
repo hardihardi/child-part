@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Analytics{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-bold text-[#566a7f]">Dashboard Analytics</h1>
+        <p class="text-sm text-gray-500">Ringkasan produksi harian Anda</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="sneat-card p-6 flex items-center">
+        <div class="p-3 rounded-md bg-blue-100 text-blue-500 mr-4">
+            <i class="fas fa-boxes fa-2x"></i>
+        </div>
+        <div>
+            <h3 class="text-gray-500 text-sm font-semibold">Total Deteksi</h3>
+            <p class="text-2xl font-bold text-gray-700">{{ total_logs }}</p>
+        </div>
+    </div>
+    
+    <div class="sneat-card p-6 flex items-center">
+        <div class="p-3 rounded-md bg-green-100 text-green-500 mr-4">
+            <i class="fas fa-check-circle fa-2x"></i>
+        </div>
+        <div>
+            <h3 class="text-gray-500 text-sm font-semibold">Total OK</h3>
+            <p class="text-2xl font-bold text-gray-700">{{ total_ok }}</p>
+        </div>
+    </div>
+    
+    <div class="sneat-card p-6 flex items-center">
+        <div class="p-3 rounded-md bg-red-100 text-red-500 mr-4">
+            <i class="fas fa-times-circle fa-2x"></i>
+        </div>
+        <div>
+            <h3 class="text-gray-500 text-sm font-semibold">Total NG (Defect)</h3>
+            <p class="text-2xl font-bold text-gray-700">{{ total_ng }}</p>
+        </div>
+    </div>
+    
+    <div class="sneat-card p-6 flex items-center">
+        <div class="p-3 rounded-md bg-purple-100 text-purple-500 mr-4">
+            <i class="fas fa-bullseye fa-2x"></i>
+        </div>
+        <div>
+            <h3 class="text-gray-500 text-sm font-semibold">Avg. Confidence</h3>
+            <p class="text-2xl font-bold text-gray-700">{{ "%.1f"|format(avg_conf) }}%</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Chart 1: Komposisi OK vs NG -->
+    <div class="sneat-card p-6 w-full">
+        <h3 class="text-lg font-semibold text-[#566a7f] mb-4">Rasio Kualitas Produksi</h3>
+        <div class="relative w-full h-64">
+            <canvas id="qualityChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Chart 2: Fatigue Analytics (NG by Hour) -->
+    <div class="sneat-card p-6 border-t-4 border-[#ffab00] w-full">
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold text-[#566a7f]">Fatigue Analytics: Jam Rawan (NG)</h3>
+            <p class="text-xs text-gray-500">Distribusi cacat/kesalahan operator per jam.</p>
+        </div>
+        <div class="relative w-full h-64">
+            <canvas id="fatigueChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart 1: Quality Pie Chart
+        const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+        new Chart(qualityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Total OK', 'Total NG'],
+                datasets: [{
+                    data: [Number('{{ total_ok }}') || 0, Number('{{ total_ng }}') || 0],
+                    backgroundColor: ['#10B981', '#EF4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Chart 2: Fatigue Bar Chart
+        const ngData = JSON.parse('{{ ng_by_hour|tojson|safe }}') || [];
+        const fatigueCtx = document.getElementById('fatigueChart').getContext('2d');
+        
+        if (ngData && ngData.length > 0) {
+            new Chart(fatigueCtx, {
+                type: 'bar',
+                data: {
+                    labels: ngData.map(d => d.hour),
+                    datasets: [{
+                        label: 'Kejadian NG',
+                        data: ngData.map(d => d.count),
+                        backgroundColor: '#F59E0B',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        } else {
+            // No data placeholder
+            const container = document.getElementById('fatigueChart').parentElement;
+            container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">Belum ada data NG untuk dianalisis</div>';
+        }
+    });
+</script>
+
+    <div class="sneat-card mb-8 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-[#566a7f]">Riwayat Deteksi Terkini</h3>
+        </div>
+        <div class="p-0 overflow-x-auto w-full">
+            <table class="w-full text-left border-collapse whitespace-nowrap">
+                <thead class="bg-gray-50/50">
+                    <tr>
+                        <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">ID</th>
+                        <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">Waktu</th>
+                        <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">Operator</th>
+                        <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">Status</th>
+                        <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">Akurasi</th>
+                        <th class="border-b border-gray-200 p-4 font-semibold text-gray-500 text-sm">Bukti Gambar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr class="hover:bg-gray-50/50">
+                        <td class="border-b border-gray-100 p-4 text-sm text-gray-600">{{ log.id }}</td>
+                        <td class="border-b border-gray-100 p-4 text-sm text-gray-600">{{ log.timestamp }}</td>
+                        <td class="border-b border-gray-100 p-4 text-sm text-gray-600">
+                            <div class="flex items-center space-x-2.5 min-w-[150px]">
+                                {% set op_avatar = avatar_url(log.operator_foto) %}
+                                {% if op_avatar %}
+                                    <img src="{{ op_avatar }}" 
+                                         alt="{{ log.operator_nama or log.operator_username }}" 
+                                         class="w-9 h-9 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0">
+                                {% else %}
+                                    <div class="w-9 h-9 rounded-full bg-[#696cff] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
+                                        {{ (log.operator_nama or log.operator_username or 'O')[0]|upper }}
+                                    </div>
+                                {% endif %}
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-xs font-semibold text-gray-800 truncate leading-snug">
+                                        {{ log.operator_nama or log.operator_username or 'Operator' }}
+                                    </span>
+                                    <span class="text-[11px] text-gray-400 truncate leading-tight">
+                                        @{{ log.operator_username or 'operator' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="border-b border-gray-100 p-4">
+                            {% if log.status_result == 'OK' %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-md text-xs font-bold">OK</span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded-md text-xs font-bold">NG</span>
+                            {% endif %}
+                        </td>
+                        <td class="border-b border-gray-100 p-4 text-sm">
+                            {% if log.confidence_score != None %}
+                                <span class="{% if log.confidence_score >= 0.8 %}text-green-600{% elif log.confidence_score >= 0.5 %}text-yellow-600{% else %}text-red-600{% endif %} font-semibold">
+                                    {{ "%.2f"|format(log.confidence_score * 100) }}%
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="border-b border-gray-100 p-4 text-sm">
+                            {% if log.raw_image_path %}
+                                <a href="{{ url_for('static', filename=log.raw_image_path.replace('\\', '/').split('static/')[1] if 'static/' in log.raw_image_path.replace('\\', '/') else log.raw_image_path) }}" target="_blank" class="inline-block relative group">
+                                    <img src="{{ url_for('static', filename=log.raw_image_path.replace('\\', '/').split('static/')[1] if 'static/' in log.raw_image_path.replace('\\', '/') else log.raw_image_path) }}" alt="Snapshot" class="h-10 w-14 object-cover rounded border border-gray-300 shadow-sm cursor-pointer transition-transform transform group-hover:scale-110">
+                                </a>
+                            {% else %}
+                                <span class="text-xs text-gray-400 italic">Tidak ada foto</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="p-4 text-center text-gray-500">Belum ada data deteksi.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
