@@ -1,4 +1,4 @@
-# 👁️🏭 Ikuyo Vision System — System Deteksi & Pemantauan Perakitan Child Part
+# 👁️🏭 Ikuyo Vision System
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Framework](https://img.shields.io/badge/Framework-Flask%203.0.0-green.svg)](https://flask.palletsprojects.org/)
